@@ -1,0 +1,557 @@
+openapi: 3.0.0
+info:
+  title: Talent-Gate API
+  description: Full detailed API documentation for Talent-Gate (Auth, Profiles, Admin, Employer, Payments, Notifications).
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api
+    description: Local Development Server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT/Sanctum
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          example: "john@example.com"
+        role:
+          type: string
+          enum: [candidate, employer, admin]
+          example: "candidate"
+        email_verified_at:
+          type: string
+          format: date-time
+          example: "2026-05-24T12:00:00Z"
+
+    CandidateProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        user_id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "John Doe"
+        bio:
+          type: string
+          example: "Senior Rust Developer with 5 years experience."
+        skills:
+          type: array
+          items:
+            type: string
+          example: ["Rust", "Vue", "Laravel"]
+        experience_level:
+          type: string
+          example: "senior"
+        avatar_url:
+          type: string
+          example: "https://res.cloudinary.com/demo/image/upload/avatar.jpg"
+        resume_url:
+          type: string
+          example: "https://res.cloudinary.com/demo/raw/upload/resume.pdf"
+
+    EmployerProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 2
+        user_id:
+          type: integer
+          example: 2
+        name:
+          type: string
+          example: "Jane Employer"
+        company_name:
+          type: string
+          example: "Tech Corp Inc."
+        website:
+          type: string
+          example: "https://techcorp.example.com"
+        description:
+          type: string
+          example: "We build scalable systems."
+        logo_url:
+          type: string
+          example: "https://res.cloudinary.com/demo/image/upload/logo.jpg"
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Not found"
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ---------------------------------------------------------
+  # AUTHENTICATION
+  # ---------------------------------------------------------
+  /login:
+    post:
+      summary: User Login
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "candidate@talentgate.test"
+                password:
+                  type: string
+                  example: "password"
+      responses:
+        '200':
+          description: Successful login
+        '401':
+          description: Invalid credentials
+
+  /register:
+    post:
+      summary: User Registration
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, password_confirmation, role]
+              properties:
+                name:
+                  type: string
+                  example: "Jane Candidate"
+                email:
+                  type: string
+                  format: email
+                  example: "jane@talentgate.test"
+                password:
+                  type: string
+                  example: "secretpassword"
+                password_confirmation:
+                  type: string
+                  example: "secretpassword"
+                role:
+                  type: string
+                  enum: [candidate, employer]
+                  example: "candidate"
+      responses:
+        '201':
+          description: Successfully registered
+        '422':
+          description: Validation error
+
+  /logout:
+    post:
+      summary: User Logout
+      tags: [Auth]
+      responses:
+        '200':
+          description: Successfully logged out
+
+  /user:
+    get:
+      summary: Get Authenticated User
+      tags: [Auth]
+      responses:
+        '200':
+          description: Returns the authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  # ---------------------------------------------------------
+  # PASSWORD RESET & EMAIL VERIFICATION
+  # ---------------------------------------------------------
+  /forgot-password:
+    post:
+      summary: Request Password Reset Link
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "user@example.com"
+      responses:
+        '200':
+          description: Reset link sent
+
+  /reset-password:
+    post:
+      summary: Reset Password
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                password_confirmation:
+                  type: string
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Password reset successful
+
+  /email/verification-notification:
+    post:
+      summary: Resend Verification Email
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "user@example.com"
+      responses:
+        '200':
+          description: Verification email sent
+
+  # ---------------------------------------------------------
+  # PROFILE
+  # ---------------------------------------------------------
+  /v1/profile:
+    get:
+      summary: Get Current User Profile
+      tags: [Profile]
+      responses:
+        '200':
+          description: Current user profile (Candidate or Employer)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    oneOf:
+                      - $ref: '#/components/schemas/CandidateProfile'
+                      - $ref: '#/components/schemas/EmployerProfile'
+    put:
+      summary: Update Current User Profile
+      tags: [Profile]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                bio:
+                  type: string
+                skills:
+                  type: array
+                  items:
+                    type: string
+                experience_level:
+                  type: string
+                company_name:
+                  type: string
+                website:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated
+
+  /v1/profile/avatar:
+    post:
+      summary: Upload Avatar / Logo
+      tags: [Profile]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Avatar uploaded successfully
+
+  /v1/profile/resume:
+    post:
+      summary: Upload Resume (Candidates Only)
+      tags: [Profile]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Resume uploaded successfully
+    delete:
+      summary: Delete Resume (Candidates Only)
+      tags: [Profile]
+      responses:
+        '200':
+          description: Resume deleted successfully
+
+  /v1/profile/{user}/resume-link:
+    get:
+      summary: Get Temporary Resume Link (Employers Only)
+      tags: [Profile]
+      parameters:
+        - in: path
+          name: user
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Returns temporary signed URL for the resume
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      url:
+                        type: string
+                        example: "https://res.cloudinary.com/demo/raw/upload/resume.pdf?signature=..."
+
+  /v1/profile/{user}:
+    get:
+      summary: Get Public Profile by User ID
+      tags: [Profile]
+      parameters:
+        - in: path
+          name: user
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Unified profile object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      user_id:
+                        type: integer
+                      name:
+                        type: string
+                      role:
+                        type: string
+                        example: "candidate"
+                      bio:
+                        type: string
+        '404':
+          description: Profile not found
+
+  # ---------------------------------------------------------
+  # ADMIN
+  # ---------------------------------------------------------
+  /admin/stats:
+    get:
+      summary: Admin Dashboard Stats
+      tags: [Admin]
+      responses:
+        '200':
+          description: Returns platform statistics
+
+  /admin/users:
+    get:
+      summary: Get All Users
+      tags: [Admin]
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated users list
+
+  /admin/users/{user}/ban:
+    patch:
+      summary: Ban / Unban User
+      tags: [Admin]
+      parameters:
+        - in: path
+          name: user
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User ban status updated
+
+  /admin/users/{user}:
+    patch:
+      summary: Update User Details
+      tags: [Admin]
+      parameters:
+        - in: path
+          name: user
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                role:
+                  type: string
+      responses:
+        '200':
+          description: User updated
+
+  # ---------------------------------------------------------
+  # EMPLOYER ANALYTICS
+  # ---------------------------------------------------------
+  /employer/analytics:
+    get:
+      summary: Employer Dashboard Analytics
+      tags: [Employer]
+      responses:
+        '200':
+          description: Analytics data for employer dashboard
+
+  # ---------------------------------------------------------
+  # PAYMENTS
+  # ---------------------------------------------------------
+  /payments:
+    get:
+      summary: Get Payment History
+      tags: [Payments]
+      responses:
+        '200':
+          description: Returns list of payments
+
+  /payments/paypal:
+    post:
+      summary: Record PayPal Payment
+      tags: [Payments]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                order_id:
+                  type: string
+                amount:
+                  type: number
+      responses:
+        '201':
+          description: Payment recorded
+
+  /payments/stripe/webhook:
+    post:
+      summary: Stripe Webhook
+      tags: [Payments]
+      security: []
+      responses:
+        '200':
+          description: Webhook received
+
+  # ---------------------------------------------------------
+  # NOTIFICATIONS
+  # ---------------------------------------------------------
+  /notifications:
+    get:
+      summary: Get Notifications
+      tags: [Notifications]
+      responses:
+        '200':
+          description: Returns unread and recent notifications
+
+  /notifications/read-all:
+    post:
+      summary: Mark All Notifications as Read
+      tags: [Notifications]
+      responses:
+        '200':
+          description: All marked as read
+
+  /notifications/{id}/read:
+    patch:
+      summary: Mark Single Notification as Read
+      tags: [Notifications]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Marked as read
