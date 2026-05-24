@@ -32,6 +32,14 @@ class AuthController extends Controller
             ]);
         }
 
+        if (! $request->user()?->hasVerifiedEmail()) {
+            Auth::guard('web')->logout();
+
+            throw ValidationException::withMessages([
+                'email' => ['Please verify your email address before logging in.'],
+            ]);
+        }
+
         $request->session()->regenerate();
 
         return response()->json([
@@ -56,6 +64,8 @@ class AuthController extends Controller
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
+        $user->loadMissing(['candidateProfile', 'employerProfile']);
+
         return response()->json([
             'user' => $this->userPayload($user),
         ]);
@@ -71,6 +81,8 @@ class AuthController extends Controller
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->role,
+            'candidate_profile' => $user->candidateProfile?->toArray(),
+            'employer_profile' => $user->employerProfile?->toArray(),
         ];
     }
 }
