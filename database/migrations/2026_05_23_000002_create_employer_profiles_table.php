@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('employer_profiles', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('user_id')->unique()->constrained('users')->cascadeOnDelete();
             $table->string('company_name');
             $table->string('logo_url')->nullable();
             $table->string('website')->nullable();
