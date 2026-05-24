@@ -17,12 +17,12 @@ class UserResource extends JsonResource
             'updated_at' => $this->updated_at,
         ];
 
-        if ($this->relationLoaded('candidateProfile') || $this->role === 'candidate') {
-            $data['profile'] = new CandidateProfileResource($this->whenLoaded('candidateProfile') ?? $this->candidateProfile);
+        if ($this->relationLoaded('candidateProfile')) {
+            $data['profile'] = new CandidateProfileResource($this->candidateProfile);
         }
 
-        if ($this->relationLoaded('employerProfile') || $this->role === 'employer') {
-            $data['profile'] = new EmployerProfileResource($this->whenLoaded('employerProfile') ?? $this->employerProfile);
+        if ($this->relationLoaded('employerProfile')) {
+            $data['profile'] = new EmployerProfileResource($this->employerProfile);
         }
 
         return $data;

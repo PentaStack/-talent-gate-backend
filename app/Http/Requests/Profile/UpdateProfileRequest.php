@@ -15,7 +15,11 @@ class UpdateProfileRequest extends FormRequest
     {
         $user = $this->user();
 
-        if ($user && $user->role === 'candidate') {
+        if (! $user) {
+            abort(401, 'Unauthenticated');
+        }
+
+        if ($user->role === 'candidate') {
             return [
                 'name' => ['required', 'string', 'max:255'],
                 'bio' => ['nullable', 'string'],

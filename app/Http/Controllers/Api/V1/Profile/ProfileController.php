@@ -26,7 +26,7 @@ class ProfileController extends Controller
             return response()->json(['data' => new CandidateProfileResource($profile)]);
         }
 
-        $profile = $user->employerProfile ?? EmployerProfile::create(['user_id' => $user->id, 'company_name' => '']);
+        $profile = $user->employerProfile ?? EmployerProfile::create(['user_id' => $user->id, 'company_name' => $user->name]);
         return response()->json(['data' => new EmployerProfileResource($profile)]);
     }
 
@@ -71,34 +71,24 @@ class ProfileController extends Controller
         }
 
         if ($user->role === 'candidate') {
-            $profile = $user->candidateProfile ?? CandidateProfile::create(['user_id' => $user->id]);
+            $profile = $user->candidateProfile;
+            if (! $profile) {
+                return response()->json(['message' => 'Not found'], 404);
+            }
+
             return response()->json([
-                'data' => [
-                    'id' => $profile->id,
-                    'user_id' => $user->id,
-                    'name' => $user->name,
-                    'role' => 'candidate',
-                    'bio' => $profile->bio,
-                    'skills' => $profile->skills,
-                    'experience_level' => $profile->experience_level,
-                    'avatar_url' => $profile->avatar_full_url,
-                ]
+                'data' => new PublicCandidateProfileResource($profile),
             ]);
         }
 
         if ($user->role === 'employer') {
-            $profile = $user->employerProfile ?? EmployerProfile::create(['user_id' => $user->id, 'company_name' => $user->name]);
+            $profile = $user->employerProfile;
+            if (! $profile) {
+                return response()->json(['message' => 'Not found'], 404);
+            }
+
             return response()->json([
-                'data' => [
-                    'id' => $profile->id,
-                    'user_id' => $user->id,
-                    'name' => $user->name,
-                    'role' => 'employer',
-                    'company_name' => $profile->company_name,
-                    'website' => $profile->website,
-                    'description' => $profile->description,
-                    'logo_url' => $profile->logo_full_url,
-                ]
+                'data' => new EmployerProfileResource($profile),
             ]);
         }
 
