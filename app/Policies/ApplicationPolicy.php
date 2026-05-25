@@ -16,4 +16,9 @@ class ApplicationPolicy
     {
         return $user->id === $application->candidate_id;
     }
+
+    public function withdraw(User $user, Application $application): bool
+    {
+        return $user->id === $application->candidate_id;
+    }
 }

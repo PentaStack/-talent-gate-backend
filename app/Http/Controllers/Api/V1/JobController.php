@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\V1\Job;
+namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\ApplicationStatus;
 use App\Http\Controllers\Controller;
@@ -12,18 +12,18 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 
-class ApplicationController extends Controller
+class JobController extends Controller
 {
-    public function store(StoreApplicationRequest $request, Job $job): JsonResponse
+    public function apply(StoreApplicationRequest $request, Job $job): JsonResponse
     {
         Gate::authorize('create', Application::class);
 
         try {
             $application = Application::create([
-                'job_id' => $job->id,
+                'job_id'       => $job->id,
                 'candidate_id' => $request->user()->id,
                 'cover_letter' => $request->validated('cover_letter'),
-                'status' => ApplicationStatus::Pending,
+                'status'       => ApplicationStatus::Pending,
             ]);
         } catch (UniqueConstraintViolationException) {
             return response()->json(

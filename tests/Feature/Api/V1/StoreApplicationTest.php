@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Api\V1\Job;
+namespace Tests\Feature\Api\V1;
 
 use App\Enums\ApplicationStatus;
 use App\Enums\JobStatus;
@@ -41,7 +41,7 @@ class StoreApplicationTest extends TestCase
             ->assertJsonPath('data.status', ApplicationStatus::Pending->value);
 
         $this->assertDatabaseHas('applications', [
-            'job_id' => $job->id,
+            'job_id'       => $job->id,
             'candidate_id' => $candidate->id,
             'cover_letter' => self::COVER_LETTER,
         ]);
@@ -88,7 +88,7 @@ class StoreApplicationTest extends TestCase
             ->assertStatus(201);
 
         $this->assertDatabaseHas('applications', [
-            'job_id' => $job->id,
+            'job_id'       => $job->id,
             'candidate_id' => $candidate->id,
         ]);
         $this->assertDatabaseMissing('applications', ['candidate_id' => $otherUserId]);
@@ -198,9 +198,9 @@ class StoreApplicationTest extends TestCase
         $job = Job::factory()->create();
 
         Application::factory()->create([
-            'job_id' => $job->id,
+            'job_id'       => $job->id,
             'candidate_id' => $candidate->id,
-            'status' => ApplicationStatus::Pending,
+            'status'       => ApplicationStatus::Pending,
         ]);
 
         $this->actingAs($candidate)
@@ -217,7 +217,7 @@ class StoreApplicationTest extends TestCase
         $job = Job::factory()->create();
 
         Application::factory()->withdrawn()->create([
-            'job_id' => $job->id,
+            'job_id'       => $job->id,
             'candidate_id' => $candidate->id,
         ]);
 
@@ -237,20 +237,11 @@ class StoreApplicationTest extends TestCase
         $candidate = User::factory()->candidate()->create();
         $job = Job::factory()->create();
 
-        // Simulate the race: insert a row at the DB level (bypassing the
-        // FormRequest duplicate check) to represent the first request that
-        // already landed, then fire the second request through the full stack.
         Application::factory()->create([
-            'job_id' => $job->id,
+            'job_id'       => $job->id,
             'candidate_id' => $candidate->id,
         ]);
 
-        // Bypass the FormRequest duplicate check by patching the query result
-        // to appear empty, then let the DB constraint catch it.
-        // Because we can't easily mock a race, we instead directly assert that
-        // when a UniqueConstraintViolationException is thrown it returns 422.
-        // The unit test below covers the controller branch; here we verify the
-        // FormRequest prevents a second apply in the non-race path.
         $this->actingAs($candidate)
             ->postJson($this->url($job), ['cover_letter' => self::COVER_LETTER])
             ->assertStatus(422);

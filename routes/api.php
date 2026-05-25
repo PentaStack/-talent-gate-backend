@@ -3,7 +3,8 @@
 use App\Http\Controllers\Admin\AdminStatsController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\EmployerAnalyticsController;
-use App\Http\Controllers\Api\V1\Job\ApplicationController;
+use App\Http\Controllers\Api\V1\ApplicationController;
+use App\Http\Controllers\Api\V1\JobController;
 use App\Http\Controllers\Api\V1\Profile\AvatarUploadController;
 use App\Http\Controllers\Api\V1\Profile\ProfileController;
 use App\Http\Controllers\Api\V1\Profile\ResumeUploadController;
@@ -130,5 +131,7 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'role:candidate'])->prefix('v1')->group(function () {
-    Route::post('jobs/{job}/apply', [ApplicationController::class, 'store']);
+    Route::post('jobs/{job}/apply', [JobController::class, 'apply']);
+    Route::get('applications', [ApplicationController::class, 'index']);
+    Route::patch('applications/{application}/withdraw', [ApplicationController::class, 'withdraw']);
 });
