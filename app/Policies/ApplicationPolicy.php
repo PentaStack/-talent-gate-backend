@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Application;
+use App\Models\Job;
 use App\Models\User;
 
 class ApplicationPolicy
@@ -20,5 +21,15 @@ class ApplicationPolicy
     public function withdraw(User $user, Application $application): bool
     {
         return $user->id === $application->candidate_id;
+    }
+
+    public function viewAnyForJob(User $user, Job $job): bool
+    {
+        return $user->id === $job->employer_id;
+    }
+
+    public function viewEmployer(User $user, Application $application): bool
+    {
+        return $user->id === $application->job->employer_id;
     }
 }

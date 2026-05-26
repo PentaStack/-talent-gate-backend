@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminStatsController;
+use App\Http\Controllers\Api\V1\Employer\EmployerApplicationController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\EmployerAnalyticsController;
 use App\Http\Controllers\Api\V1\ApplicationController;
@@ -134,4 +135,9 @@ Route::middleware(['auth', 'role:candidate'])->prefix('v1')->group(function () {
     Route::post('jobs/{job}/apply', [JobController::class, 'apply']);
     Route::get('applications', [ApplicationController::class, 'index']);
     Route::patch('applications/{application}/withdraw', [ApplicationController::class, 'withdraw']);
+});
+
+Route::middleware(['auth', 'role:employer'])->prefix('v1/employer')->group(function () {
+    Route::get('jobs/{job}/applications', [EmployerApplicationController::class, 'index']);
+    Route::get('applications/{application}', [EmployerApplicationController::class, 'show']);
 });
