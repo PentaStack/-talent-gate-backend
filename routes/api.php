@@ -140,4 +140,5 @@ Route::middleware(['auth', 'role:candidate'])->prefix('v1')->group(function () {
 Route::middleware(['auth', 'role:employer'])->prefix('v1/employer')->group(function () {
     Route::get('jobs/{job}/applications', [EmployerApplicationController::class, 'index']);
     Route::get('applications/{application}', [EmployerApplicationController::class, 'show']);
+    Route::patch('applications/{application}/status', [EmployerApplicationController::class, 'updateStatus']);
 });

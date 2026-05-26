@@ -32,4 +32,9 @@ class ApplicationPolicy
     {
         return $user->id === $application->job->employer_id;
     }
+
+    public function updateStatus(User $user, Application $application): bool
+    {
+        return $user->id === $application->job->employer_id;
+    }
 }

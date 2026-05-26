@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api\V1\Employer;
 
 use App\Http\Controllers\Controller;
+use App\Enums\ApplicationStatus;
 use App\Http\Requests\ListEmployerApplicationsRequest;
+use App\Http\Requests\UpdateApplicationStatusRequest;
 use App\Http\Resources\EmployerApplicationResource;
 use App\Models\Application;
 use App\Models\Job;
@@ -24,6 +26,25 @@ class EmployerApplicationController extends Controller
             ->paginate($request->integer('per_page', 15));
 
         return EmployerApplicationResource::collection($applications);
+    }
+
+    public function updateStatus(UpdateApplicationStatusRequest $request, Application $application): JsonResponse
+    {
+        $application->load('job');
+        Gate::authorize('updateStatus', $application);
+
+        $to = ApplicationStatus::from($request->validated('status'));
+
+        if (! $application->status->toState()->canTransitionTo($to, 'employer')) {
+            return response()->json(['message' => 'This transition is not permitted.'], 422);
+        }
+
+        $application->update(['status' => $to]);
+
+        return response()->json([
+            'data'    => new EmployerApplicationResource($application->load('candidate.candidateProfile')),
+            'message' => "Application marked as {$to->value}.",
+        ]);
     }
 
     public function show(Application $application): JsonResponse
