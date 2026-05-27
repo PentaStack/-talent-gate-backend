@@ -15,6 +15,23 @@ use Illuminate\Support\Facades\Gate;
 
 class EmployerApplicationController extends Controller
 {
+    public function jobs(): JsonResponse
+    {
+        $jobs = Job::where('employer_id', auth()->id())
+            ->withCount('applications')
+            ->latest()
+            ->get()
+            ->map(fn (Job $job) => [
+                'id'                   => $job->id,
+                'title'                => $job->title,
+                'status'               => $job->status->value,
+                'application_deadline' => $job->application_deadline?->toDateString(),
+                'applications_count'   => $job->applications_count,
+            ]);
+
+        return response()->json(['data' => $jobs]);
+    }
+
     public function index(ListEmployerApplicationsRequest $request, Job $job): AnonymousResourceCollection
     {
         Gate::authorize('viewAnyForJob', [Application::class, $job]);

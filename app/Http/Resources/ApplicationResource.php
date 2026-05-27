@@ -12,6 +12,7 @@ class ApplicationResource extends JsonResource
         return [
             'id'           => $this->id,
             'status'       => $this->status->value,
+            'cover_letter' => $this->cover_letter,
             'submitted_at' => $this->submitted_at?->toIso8601String(),
             'viewed_at'    => $this->viewed_at?->toIso8601String(),
             'job'          => $this->whenLoaded('job', fn () => [

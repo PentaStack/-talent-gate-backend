@@ -22,6 +22,15 @@ class ApplicationController extends Controller
         return ApplicationResource::collection($applications);
     }
 
+    public function show(Application $application): JsonResponse
+    {
+        Gate::authorize('view', $application);
+
+        $application->load(['job.employer.employerProfile']);
+
+        return response()->json(['data' => new ApplicationResource($application)]);
+    }
+
     public function withdraw(Application $application): JsonResponse
     {
         Gate::authorize('withdraw', $application);

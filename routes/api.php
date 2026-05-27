@@ -130,12 +130,15 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'role:candidate'])->prefix('v1')->group(function () {
+    Route::get('jobs', [JobController::class, 'index']);
     Route::post('jobs/{job}/apply', [JobController::class, 'apply']);
     Route::get('applications', [ApplicationController::class, 'index']);
+    Route::get('applications/{application}', [ApplicationController::class, 'show']);
     Route::patch('applications/{application}/withdraw', [ApplicationController::class, 'withdraw']);
 });
 
 Route::middleware(['auth', 'role:employer'])->prefix('v1/employer')->group(function () {
+    Route::get('jobs', [EmployerApplicationController::class, 'jobs']);
     Route::get('jobs/{job}/applications', [EmployerApplicationController::class, 'index']);
     Route::get('applications/{application}', [EmployerApplicationController::class, 'show']);
     Route::patch('applications/{application}/status', [EmployerApplicationController::class, 'updateStatus']);
