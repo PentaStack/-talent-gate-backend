@@ -14,10 +14,12 @@ class CloseExpiredJobsCommand extends Command
 
     public function handle(): int
     {
-        Job::query()
+        $count = Job::query()
             ->where('status', JobStatus::Active)
             ->where('application_deadline', '<', Carbon::today('UTC')->toDateString())
             ->update(['status' => JobStatus::Closed]);
+
+        $this->info("Closed {$count} expired job listing(s).");
 
         return self::SUCCESS;
     }

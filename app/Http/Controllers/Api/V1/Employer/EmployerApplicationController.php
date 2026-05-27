@@ -30,6 +30,7 @@ class EmployerApplicationController extends Controller
 
     public function updateStatus(UpdateApplicationStatusRequest $request, Application $application): JsonResponse
     {
+        // job must be loaded before Gate::authorize — ApplicationPolicy::updateStatus needs the relationship
         $application->load('job');
         Gate::authorize('updateStatus', $application);
 
@@ -49,6 +50,7 @@ class EmployerApplicationController extends Controller
 
     public function show(Application $application): JsonResponse
     {
+        // job must be loaded before Gate::authorize — ApplicationPolicy::viewEmployer needs the relationship
         $application->load('job');
         Gate::authorize('viewEmployer', $application);
 
@@ -56,7 +58,8 @@ class EmployerApplicationController extends Controller
             ->whereNull('viewed_at')
             ->update(['viewed_at' => now()]);
 
-        $application->refresh()->load('candidate.candidateProfile');
+        $application->viewed_at = now();
+        $application->load('candidate.candidateProfile');
 
         return response()->json(['data' => new EmployerApplicationResource($application)]);
     }

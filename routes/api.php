@@ -92,14 +92,12 @@ Route::middleware('auth')->group(function () {
     // Profile routes v1
     Route::prefix('v1')->group(function () {
         Route::prefix('profile')->group(function () {
-            Route::middleware('auth')->group(function () {
-                Route::get('/', [ProfileController::class, 'index']);
-                Route::put('/', [ProfileController::class, 'update']);
-                Route::post('/avatar', [AvatarUploadController::class, 'store']);
-                Route::post('/resume', [ResumeUploadController::class, 'store'])->middleware('role:candidate');
-                Route::delete('/resume', [ResumeUploadController::class, 'destroy'])->middleware('role:candidate');
-                Route::get('/{user}/resume-link', [ProfileController::class, 'resumeLink'])->middleware('role:employer');
-            });
+            Route::get('/', [ProfileController::class, 'index']);
+            Route::put('/', [ProfileController::class, 'update']);
+            Route::post('/avatar', [AvatarUploadController::class, 'store']);
+            Route::post('/resume', [ResumeUploadController::class, 'store'])->middleware('role:candidate');
+            Route::delete('/resume', [ResumeUploadController::class, 'destroy'])->middleware('role:candidate');
+            Route::get('/{user}/resume-link', [ProfileController::class, 'resumeLink'])->middleware('role:employer');
 
             // public candidate profile
             Route::get('/{user}', [ProfileController::class, 'showPublic']);

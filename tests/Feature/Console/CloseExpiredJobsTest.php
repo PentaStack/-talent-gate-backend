@@ -79,7 +79,7 @@ class CloseExpiredJobsTest extends TestCase
         $this->assertSame($status, $job->fresh()->status);
     }
 
-    // ── Slice 7: integration with apply endpoint ─────────────────────────
+    // ── Slice 6: integration with apply endpoint ─────────────────────────
 
     public function test_newly_closed_job_rejects_new_application(): void
     {

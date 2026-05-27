@@ -13,17 +13,7 @@ class StoreApplicationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $user = $this->user();
-
-        if ($user === null) {
-            return false;
-        }
-
-        if ($user->banned) {
-            abort(403, 'Your account has been suspended.');
-        }
-
-        return true;
+        return $this->user() !== null;
     }
 
     public function rules(): array
@@ -45,7 +35,7 @@ class StoreApplicationRequest extends FormRequest
                 return;
             }
 
-            if ($job->application_deadline->lt(now()->startOfDay())) {
+            if ($job->application_deadline->lt(now('UTC')->startOfDay())) {
                 $v->errors()->add('job', 'The application deadline for this job has passed.');
 
                 return;
