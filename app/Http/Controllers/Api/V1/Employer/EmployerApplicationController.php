@@ -71,11 +71,11 @@ class EmployerApplicationController extends Controller
         $application->load('job');
         Gate::authorize('viewEmployer', $application);
 
-        Application::where('id', $application->id)
-            ->whereNull('viewed_at')
-            ->update(['viewed_at' => now()]);
+        if ($application->viewed_at === null) {
+            $application->viewed_at = now();
+            $application->save();
+        }
 
-        $application->viewed_at = now();
         $application->load('candidate.candidateProfile');
 
         return response()->json(['data' => new EmployerApplicationResource($application)]);
