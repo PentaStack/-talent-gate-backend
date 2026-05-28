@@ -1,9 +1,17 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminStatsController;
+use App\Http\Controllers\Api\V1\Employer\EmployerApplicationController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\EmployerAnalyticsController;
+use App\Http\Controllers\Api\V1\ApplicationController;
+use App\Http\Controllers\Api\V1\JobController;
+use App\Http\Controllers\Api\V1\Profile\AvatarUploadController;
+use App\Http\Controllers\Api\V1\Profile\ProfileController;
+use App\Http\Controllers\Api\V1\Profile\ResumeUploadController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Notification\NotificationController;
 use App\Http\Controllers\Payment\PaymentController;
 use App\Http\Controllers\Payment\PayPalController;
@@ -15,9 +23,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
 Route::post('login', [AuthController::class, 'login']);
-Route::post('register', [\App\Http\Controllers\Auth\RegisterController::class, 'register']);
-Route::post('forgot-password', [\App\Http\Controllers\Auth\PasswordResetController::class, 'forgot']);
-Route::post('reset-password', [\App\Http\Controllers\Auth\PasswordResetController::class, 'reset']);
+Route::post('register', [RegisterController::class, 'register']);
+Route::post('forgot-password', [PasswordResetController::class, 'forgot']);
+Route::post('reset-password', [PasswordResetController::class, 'reset']);
 Route::post('email/verification-notification', function (Request $request) {
     $data = $request->validate([
         'email' => ['required', 'email'],
@@ -39,7 +47,7 @@ Route::post('email/verification-notification', function (Request $request) {
 
     try {
         $user->sendEmailVerificationNotification();
-    } catch (\Throwable $exception) {
+    } catch (Throwable $exception) {
         Log::error('Failed to resend verification email.', [
             'user_id' => $user->id,
             'email' => $user->email,
@@ -80,21 +88,19 @@ Route::get('email/verify/{id}/{hash}', function (Request $request, string $id, s
 Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::get('user', [AuthController::class, 'user']);
-    
+
     // Profile routes v1
     Route::prefix('v1')->group(function () {
         Route::prefix('profile')->group(function () {
-            Route::middleware('auth')->group(function () {
-                Route::get('/', [\App\Http\Controllers\Api\V1\Profile\ProfileController::class, 'index']);
-                Route::put('/', [\App\Http\Controllers\Api\V1\Profile\ProfileController::class, 'update']);
-                Route::post('/avatar', [\App\Http\Controllers\Api\V1\Profile\AvatarUploadController::class, 'store']);
-                Route::post('/resume', [\App\Http\Controllers\Api\V1\Profile\ResumeUploadController::class, 'store'])->middleware('role:candidate');
-                Route::delete('/resume', [\App\Http\Controllers\Api\V1\Profile\ResumeUploadController::class, 'destroy'])->middleware('role:candidate');
-                Route::get('/{user}/resume-link', [\App\Http\Controllers\Api\V1\Profile\ProfileController::class, 'resumeLink'])->middleware('role:employer');
-            });
-    
+            Route::get('/', [ProfileController::class, 'index']);
+            Route::put('/', [ProfileController::class, 'update']);
+            Route::post('/avatar', [AvatarUploadController::class, 'store']);
+            Route::post('/resume', [ResumeUploadController::class, 'store'])->middleware('role:candidate');
+            Route::delete('/resume', [ResumeUploadController::class, 'destroy'])->middleware('role:candidate');
+            Route::get('/{user}/resume-link', [ProfileController::class, 'resumeLink'])->middleware('role:employer');
+
             // public candidate profile
-            Route::get('/{user}', [\App\Http\Controllers\Api\V1\Profile\ProfileController::class, 'showPublic']);
+            Route::get('/{user}', [ProfileController::class, 'showPublic']);
         });
     });
 });
@@ -121,4 +127,19 @@ Route::middleware('auth')->group(function () {
     Route::get('notifications', [NotificationController::class, 'index']);
     Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead']);
     Route::patch('notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+});
+
+Route::middleware(['auth', 'role:candidate'])->prefix('v1')->group(function () {
+    Route::get('jobs', [JobController::class, 'index']);
+    Route::post('jobs/{job}/apply', [JobController::class, 'apply']);
+    Route::get('applications', [ApplicationController::class, 'index']);
+    Route::get('applications/{application}', [ApplicationController::class, 'show']);
+    Route::patch('applications/{application}/withdraw', [ApplicationController::class, 'withdraw']);
+});
+
+Route::middleware(['auth', 'role:employer'])->prefix('v1/employer')->group(function () {
+    Route::get('jobs', [EmployerApplicationController::class, 'jobs']);
+    Route::get('jobs/{job}/applications', [EmployerApplicationController::class, 'index']);
+    Route::get('applications/{application}', [EmployerApplicationController::class, 'show']);
+    Route::patch('applications/{application}/status', [EmployerApplicationController::class, 'updateStatus']);
 });

@@ -23,6 +23,7 @@ class Dev5Seeder extends Seeder
                     'name' => $data['name'],
                     'role' => $data['role'],
                     'password' => Hash::make('password'),
+                    'email_verified_at' => now(),
                 ],
             );
         }

@@ -2,9 +2,11 @@
 
 namespace App\Observers;
 
+use App\Enums\ApplicationStatus;
 use App\Models\Application;
 use App\Models\Payment;
 use App\Notifications\ApplicationStatusChangedNotification;
+use App\Notifications\ApplicationViewedNotification;
 use App\Notifications\NewApplicationNotification;
 use App\Services\PaymentService;
 
@@ -30,12 +32,21 @@ class ApplicationObserver
 
             $application->candidate->notify(new ApplicationStatusChangedNotification(
                 jobTitle: $application->job->title,
-                status: $application->status,
+                status: $application->status->value,
                 applicationId: $application->id,
             ));
         }
 
-        if (! $application->wasChanged('status') || $application->status !== 'accepted') {
+        if ($application->wasChanged('viewed_at') && $application->viewed_at !== null) {
+            $application->loadMissing('job', 'candidate');
+
+            $application->candidate->notify(new ApplicationViewedNotification(
+                jobTitle:      $application->job->title,
+                applicationId: $application->id,
+            ));
+        }
+
+        if (! $application->wasChanged('status') || $application->status !== ApplicationStatus::Accepted) {
             return;
         }
 

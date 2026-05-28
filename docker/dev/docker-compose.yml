@@ -1,0 +1,73 @@
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: docker/dev/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../../.env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      PHP_OPCACHE_ENABLE: "0"
+    volumes:
+      - ../..:/var/www/html
+      - vendor:/var/www/html/vendor
+      - storage:/var/www/html/storage
+      - bootstrap_cache:/var/www/html/bootstrap/cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+
+  scheduler:
+    build:
+      context: ../..
+      dockerfile: docker/dev/Dockerfile
+    command: ["php", "artisan", "schedule:work"]
+    env_file:
+      - ../../.env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      PHP_OPCACHE_ENABLE: "0"
+    volumes:
+      - ../..:/var/www/html
+      - vendor:/var/www/html/vendor
+      - storage:/var/www/html/storage
+      - bootstrap_cache:/var/www/html/bootstrap/cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-laravel}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  pgdata:
+  vendor:
+  storage:
+  bootstrap_cache:

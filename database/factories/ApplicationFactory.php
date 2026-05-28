@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\ApplicationStatus;
 use App\Models\Application;
 use App\Models\Job;
 use App\Models\User;
@@ -19,7 +20,13 @@ class ApplicationFactory extends Factory
         return [
             'job_id' => Job::factory(),
             'candidate_id' => User::factory()->candidate(),
-            'status' => 'pending',
+            'status' => ApplicationStatus::Pending,
+            'cover_letter' => fake()->paragraph(),
         ];
+    }
+
+    public function withdrawn(): static
+    {
+        return $this->state(fn () => ['status' => ApplicationStatus::Withdrawn]);
     }
 }
