@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Employer;
 use App\Http\Controllers\Controller;
 use App\Enums\ApplicationStatus;
 use App\Http\Requests\ListEmployerApplicationsRequest;
+use App\Http\Requests\UpdateApplicationNotesRequest;
 use App\Http\Requests\UpdateApplicationStatusRequest;
 use App\Http\Resources\EmployerApplicationResource;
 use App\Models\Application;
@@ -12,6 +13,8 @@ use App\Models\Job;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Http;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EmployerApplicationController extends Controller
 {
@@ -62,6 +65,46 @@ class EmployerApplicationController extends Controller
         return response()->json([
             'data'    => new EmployerApplicationResource($application->load('candidate.candidateProfile')),
             'message' => "Application marked as {$to->value}.",
+        ]);
+    }
+
+    public function streamResume(Application $application): StreamedResponse|JsonResponse
+    {
+        $application->load('job');
+        Gate::authorize('viewEmployer', $application);
+
+        $application->load('candidate.candidateProfile');
+        $url = $application->candidate->candidateProfile?->resume_full_url;
+
+        if (!$url) {
+            return response()->json(['message' => 'No resume on file.'], 404);
+        }
+
+        $remote = Http::get($url);
+
+        $body = $remote->body();
+
+        return response()->stream(
+            fn () => print($body),
+            200,
+            [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="resume.pdf"',
+                'Content-Length'      => strlen($body),
+            ]
+        );
+    }
+
+    public function updateNotes(UpdateApplicationNotesRequest $request, Application $application): JsonResponse
+    {
+        $application->load('job');
+        Gate::authorize('updateNotes', $application);
+
+        $application->update(['notes' => $request->validated('notes')]);
+
+        return response()->json([
+            'data'    => new EmployerApplicationResource($application->load('candidate.candidateProfile')),
+            'message' => 'Notes saved.',
         ]);
     }
 

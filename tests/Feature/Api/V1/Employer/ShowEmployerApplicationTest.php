@@ -84,10 +84,45 @@ class ShowEmployerApplicationTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'data' => [
-                    'id', 'status', 'submitted_at', 'viewed_at', 'cover_letter',
-                    'candidate' => ['id', 'name', 'experience_level', 'skills', 'avatar_url'],
+                    'id', 'status', 'submitted_at', 'viewed_at', 'cover_letter', 'notes',
+                    'candidate' => [
+                        'id', 'name', 'email', 'bio',
+                        'experience_level', 'skills', 'avatar_url',
+                        'resume_url', 'has_resume',
+                    ],
                 ],
             ]);
+    }
+
+    public function test_has_resume_is_false_when_candidate_has_no_resume(): void
+    {
+        $employer    = User::factory()->employer()->create();
+        $job         = Job::factory()->forEmployer($employer)->create();
+        $candidate   = User::factory()->candidate()->create();
+        CandidateProfile::factory()->for($candidate, 'user')->create(['resume_url' => null]);
+        $application = Application::factory()->for($job)->for($candidate, 'candidate')->create();
+
+        $this->actingAs($employer)
+            ->getJson($this->url($application))
+            ->assertStatus(200)
+            ->assertJsonPath('data.candidate.has_resume', false)
+            ->assertJsonPath('data.candidate.resume_url', null);
+    }
+
+    public function test_has_resume_is_true_when_candidate_has_resume(): void
+    {
+        $employer    = User::factory()->employer()->create();
+        $job         = Job::factory()->forEmployer($employer)->create();
+        $candidate   = User::factory()->candidate()->create();
+        CandidateProfile::factory()->for($candidate, 'user')->create([
+            'resume_url' => 'https://res.cloudinary.com/demo/raw/upload/v1/talent-gate/resumes/resume-1',
+        ]);
+        $application = Application::factory()->for($job)->for($candidate, 'candidate')->create();
+
+        $this->actingAs($employer)
+            ->getJson($this->url($application))
+            ->assertStatus(200)
+            ->assertJsonPath('data.candidate.has_resume', true);
     }
 
     // ── viewed_at behaviour ───────────────────────────────────────────────────

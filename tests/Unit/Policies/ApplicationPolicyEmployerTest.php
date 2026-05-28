@@ -73,4 +73,20 @@ class ApplicationPolicyEmployerTest extends TestCase
             $this->policy->viewEmployer($this->makeUser(1), $this->makeApplication(2))
         );
     }
+
+    // ── updateNotes() ─────────────────────────────────────────────────────────
+
+    public function test_updateNotes_returns_true_when_employer_owns_applications_job(): void
+    {
+        $this->assertTrue(
+            $this->policy->updateNotes($this->makeUser(1), $this->makeApplication(1))
+        );
+    }
+
+    public function test_updateNotes_returns_false_for_different_employer(): void
+    {
+        $this->assertFalse(
+            $this->policy->updateNotes($this->makeUser(1), $this->makeApplication(2))
+        );
+    }
 }
