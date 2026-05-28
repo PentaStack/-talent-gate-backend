@@ -12,9 +12,9 @@ use App\Models\Application;
 use App\Models\Job;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EmployerApplicationController extends Controller
 {
@@ -68,7 +68,7 @@ class EmployerApplicationController extends Controller
         ]);
     }
 
-    public function streamResume(Application $application): StreamedResponse|JsonResponse
+    public function streamResume(Application $application): Response|JsonResponse
     {
         $application->load('job');
         Gate::authorize('viewEmployer', $application);
@@ -82,17 +82,17 @@ class EmployerApplicationController extends Controller
 
         $remote = Http::get($url);
 
-        $body = $remote->body();
+        if ($remote->failed()) {
+            return response()->json(['message' => 'Resume could not be retrieved.'], 502);
+        }
 
-        return response()->stream(
-            fn () => print($body),
-            200,
-            [
-                'Content-Type'        => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="resume.pdf"',
-                'Content-Length'      => strlen($body),
-            ]
-        );
+        $body = $remote->body();
+        $isPdf = str_starts_with($body, '%PDF');
+
+        return response($body, 200, [
+            'Content-Type'        => $isPdf ? 'application/pdf' : 'application/octet-stream',
+            'Content-Disposition' => 'inline; filename="resume' . ($isPdf ? '.pdf' : '') . '"',
+        ]);
     }
 
     public function updateNotes(UpdateApplicationNotesRequest $request, Application $application): JsonResponse
