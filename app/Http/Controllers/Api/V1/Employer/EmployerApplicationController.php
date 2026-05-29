@@ -5,13 +5,16 @@ namespace App\Http\Controllers\Api\V1\Employer;
 use App\Http\Controllers\Controller;
 use App\Enums\ApplicationStatus;
 use App\Http\Requests\ListEmployerApplicationsRequest;
+use App\Http\Requests\UpdateApplicationNotesRequest;
 use App\Http\Requests\UpdateApplicationStatusRequest;
 use App\Http\Resources\EmployerApplicationResource;
 use App\Models\Application;
 use App\Models\Job;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Http;
 
 class EmployerApplicationController extends Controller
 {
@@ -62,6 +65,46 @@ class EmployerApplicationController extends Controller
         return response()->json([
             'data'    => new EmployerApplicationResource($application->load('candidate.candidateProfile')),
             'message' => "Application marked as {$to->value}.",
+        ]);
+    }
+
+    public function streamResume(Application $application): Response|JsonResponse
+    {
+        $application->load('job');
+        Gate::authorize('viewEmployer', $application);
+
+        $application->load('candidate.candidateProfile');
+        $url = $application->candidate->candidateProfile?->resume_full_url;
+
+        if (!$url) {
+            return response()->json(['message' => 'No resume on file.'], 404);
+        }
+
+        $remote = Http::get($url);
+
+        if ($remote->failed()) {
+            return response()->json(['message' => 'Resume could not be retrieved.'], 502);
+        }
+
+        $body = $remote->body();
+        $isPdf = str_starts_with($body, '%PDF');
+
+        return response($body, 200, [
+            'Content-Type'        => $isPdf ? 'application/pdf' : 'application/octet-stream',
+            'Content-Disposition' => 'inline; filename="resume' . ($isPdf ? '.pdf' : '') . '"',
+        ]);
+    }
+
+    public function updateNotes(UpdateApplicationNotesRequest $request, Application $application): JsonResponse
+    {
+        $application->load('job');
+        Gate::authorize('updateNotes', $application);
+
+        $application->update(['notes' => $request->validated('notes')]);
+
+        return response()->json([
+            'data'    => new EmployerApplicationResource($application->load('candidate.candidateProfile')),
+            'message' => 'Notes saved.',
         ]);
     }
 

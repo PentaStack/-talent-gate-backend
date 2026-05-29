@@ -28,7 +28,10 @@ class ApplicationController extends Controller
 
         $application->load(['job.employer.employerProfile']);
 
-        return response()->json(['data' => new ApplicationResource($application)]);
+        $data = (new ApplicationResource($application))->toArray(request());
+        $data['cover_letter'] = $application->cover_letter;
+
+        return response()->json(['data' => $data]);
     }
 
     public function withdraw(Application $application): JsonResponse

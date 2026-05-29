@@ -15,12 +15,17 @@ class EmployerApplicationResource extends JsonResource
             'submitted_at' => $this->submitted_at?->toIso8601String(),
             'viewed_at'    => $this->viewed_at?->toIso8601String(),
             'cover_letter' => $this->cover_letter,
+            'notes'        => $this->notes,
             'candidate'    => $this->whenLoaded('candidate', fn () => [
                 'id'               => $this->candidate->id,
                 'name'             => $this->candidate->name,
+                'email'            => $this->candidate->email,
+                'bio'              => $this->candidate->candidateProfile?->bio,
                 'experience_level' => $this->candidate->candidateProfile?->experience_level,
                 'skills'           => $this->candidate->candidateProfile?->skills,
                 'avatar_url'       => $this->candidate->candidateProfile?->avatar_full_url,
+                'resume_url'       => $this->candidate->candidateProfile?->resume_full_url,
+                'has_resume'       => (bool) $this->candidate->candidateProfile?->resume_url,
             ]),
         ];
     }

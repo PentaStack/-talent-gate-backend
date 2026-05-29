@@ -61,4 +61,23 @@ class ApplicationTest extends TestCase
 
         $this->assertNull($application->viewed_at);
     }
+
+    public function test_notes_is_in_fillable(): void
+    {
+        $this->assertContains('notes', (new Application)->getFillable());
+    }
+
+    public function test_notes_persists_and_reads_back(): void
+    {
+        $application = Application::factory()->create(['notes' => 'Strong candidate.']);
+
+        $this->assertSame('Strong candidate.', $application->fresh()->notes);
+    }
+
+    public function test_notes_is_null_by_default(): void
+    {
+        $application = Application::factory()->create();
+
+        $this->assertNull($application->notes);
+    }
 }

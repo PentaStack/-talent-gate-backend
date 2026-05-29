@@ -37,4 +37,9 @@ class ApplicationPolicy
     {
         return $user->id === $application->job->employer_id;
     }
+
+    public function updateNotes(User $user, Application $application): bool
+    {
+        return $user->id === $application->job->employer_id;
+    }
 }

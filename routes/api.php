@@ -142,4 +142,6 @@ Route::middleware(['auth', 'role:employer'])->prefix('v1/employer')->group(funct
     Route::get('jobs/{job}/applications', [EmployerApplicationController::class, 'index']);
     Route::get('applications/{application}', [EmployerApplicationController::class, 'show']);
     Route::patch('applications/{application}/status', [EmployerApplicationController::class, 'updateStatus']);
+    Route::patch('applications/{application}/notes', [EmployerApplicationController::class, 'updateNotes']);
+    Route::get('applications/{application}/resume', [EmployerApplicationController::class, 'streamResume']);
 });
