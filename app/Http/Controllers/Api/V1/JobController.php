@@ -6,6 +6,7 @@ use App\Enums\ApplicationStatus;
 use App\Enums\JobStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreApplicationRequest;
+use Illuminate\Http\Request;
 use App\Http\Resources\ApplicationResource;
 use App\Models\Application;
 use App\Models\Job;
@@ -15,13 +16,34 @@ use Illuminate\Support\Facades\Gate;
 
 class JobController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $jobs = Job::where('status', JobStatus::Active)
+        $query = Job::where('status', JobStatus::Active)
             ->where('application_deadline', '>=', now()->toDateString())
-            ->with(['employer.employerProfile', 'category', 'technologies'])
-            ->latest()
-            ->paginate(20);
+            ->with(['employer.employerProfile', 'category', 'technologies']);
+
+        // Keyword search on title and description
+        if ($q = trim((string) $request->input('q', ''))) {
+            $query->where(function ($sub) use ($q): void {
+                $term = '%'.mb_strtolower($q).'%';
+                $sub->whereRaw('LOWER(title) LIKE ?', [$term])
+                    ->orWhereRaw('LOWER(description) LIKE ?', [$term]);
+            });
+        }
+
+        // Experience level filter
+        if ($level = $request->input('experience_level')) {
+            $query->where('experience_level', $level);
+        }
+
+        // Sorting
+        match ($request->input('sort', 'newest')) {
+            'deadline' => $query->orderBy('application_deadline'),
+            default    => $query->latest(),
+        };
+
+        $perPage = min(max(1, (int) $request->input('per_page', 20)), 100);
+        $jobs = $query->paginate($perPage);
 
         return response()->json([
             'data' => $jobs->map(fn (Job $job) => [
@@ -31,6 +53,7 @@ class JobController extends Controller
                 'salary_range'         => $job->salary_range,
                 'work_type'            => $job->work_type?->value,
                 'location'             => $job->location,
+                'experience_level'     => $job->experience_level?->value,
                 'application_deadline' => $job->application_deadline?->toDateString(),
                 'category'             => $job->category ? ['id' => $job->category->id, 'name' => $job->category->name] : null,
                 'technologies'         => $job->technologies->map(fn ($t) => ['id' => $t->id, 'name' => $t->name])->values(),
@@ -64,6 +87,7 @@ class JobController extends Controller
                 'salary_range'         => $job->salary_range,
                 'work_type'            => $job->work_type?->value,
                 'location'             => $job->location,
+                'experience_level'     => $job->experience_level?->value,
                 'application_deadline' => $job->application_deadline?->toDateString(),
                 'category'             => $job->category ? ['id' => $job->category->id, 'name' => $job->category->name] : null,
                 'technologies'         => $job->technologies->map(fn ($t) => ['id' => $t->id, 'name' => $t->name])->values(),
