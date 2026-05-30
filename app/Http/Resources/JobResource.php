@@ -18,6 +18,7 @@ class JobResource extends JsonResource
             'work_type'            => $this->work_type?->value,
             'location'             => $this->location,
             'status'               => $this->status->value,
+            'rejection_reason'     => $this->rejection_reason,
             'application_deadline' => $this->application_deadline?->toDateString(),
             'views_count'          => $this->views_count,
             'category'             => $this->whenLoaded('category', fn () => [

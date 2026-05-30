@@ -21,7 +21,7 @@ class Job extends Model
     protected $fillable = [
         'employer_id', 'title', 'description', 'requirements',
         'salary_range', 'work_type', 'location', 'category_id',
-        'status', 'views_count', 'application_deadline',
+        'status', 'rejection_reason', 'views_count', 'application_deadline',
     ];
 
     protected function casts(): array

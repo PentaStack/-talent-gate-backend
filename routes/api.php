@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminJobController;
 use App\Http\Controllers\Admin\AdminStatsController;
 use App\Http\Controllers\Api\V1\Employer\EmployerApplicationController;
 use App\Http\Controllers\Api\V1\Employer\EmployerJobController;
@@ -113,6 +114,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('users', [AdminUserController::class, 'index']);
     Route::patch('users/{user}/ban', [AdminUserController::class, 'ban']);
     Route::patch('users/{user}', [AdminUserController::class, 'update']);
+    Route::get('jobs', [AdminJobController::class, 'index']);
+    Route::patch('jobs/{job}/approve', [AdminJobController::class, 'approve']);
+    Route::patch('jobs/{job}/reject', [AdminJobController::class, 'reject']);
 });
 
 Route::middleware(['auth', 'role:employer'])->prefix('employer')->group(function () {
