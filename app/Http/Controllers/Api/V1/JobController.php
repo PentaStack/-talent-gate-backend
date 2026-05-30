@@ -11,7 +11,6 @@ use App\Models\Application;
 use App\Models\Job;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
 
 class JobController extends Controller
@@ -20,7 +19,7 @@ class JobController extends Controller
     {
         $jobs = Job::where('status', JobStatus::Active)
             ->where('application_deadline', '>=', now()->toDateString())
-            ->with('employer.employerProfile')
+            ->with(['employer.employerProfile', 'category', 'technologies'])
             ->latest()
             ->paginate(20);
 
@@ -28,7 +27,13 @@ class JobController extends Controller
             'data' => $jobs->map(fn (Job $job) => [
                 'id'                   => $job->id,
                 'title'                => $job->title,
+                'description'          => $job->description,
+                'salary_range'         => $job->salary_range,
+                'work_type'            => $job->work_type?->value,
+                'location'             => $job->location,
                 'application_deadline' => $job->application_deadline?->toDateString(),
+                'category'             => $job->category ? ['id' => $job->category->id, 'name' => $job->category->name] : null,
+                'technologies'         => $job->technologies->map(fn ($t) => ['id' => $t->id, 'name' => $t->name])->values(),
                 'employer' => [
                     'company_name' => $job->employer->employerProfile?->company_name ?? $job->employer->name,
                     'logo_url'     => $job->employer->employerProfile?->logo_full_url,
@@ -39,6 +44,37 @@ class JobController extends Controller
                 'last_page'    => $jobs->lastPage(),
                 'per_page'     => $jobs->perPage(),
                 'total'        => $jobs->total(),
+            ],
+        ]);
+    }
+
+    public function show(Job $job): JsonResponse
+    {
+        abort_if($job->status !== JobStatus::Active, 404);
+
+        $job->increment('views_count');
+        $job->load(['employer.employerProfile', 'category', 'technologies']);
+
+        return response()->json([
+            'data' => [
+                'id'                   => $job->id,
+                'title'                => $job->title,
+                'description'          => $job->description,
+                'requirements'         => $job->requirements,
+                'salary_range'         => $job->salary_range,
+                'work_type'            => $job->work_type?->value,
+                'location'             => $job->location,
+                'application_deadline' => $job->application_deadline?->toDateString(),
+                'category'             => $job->category ? ['id' => $job->category->id, 'name' => $job->category->name] : null,
+                'technologies'         => $job->technologies->map(fn ($t) => ['id' => $t->id, 'name' => $t->name])->values(),
+                'employer' => [
+                    'company_name' => $job->employer->employerProfile?->company_name ?? $job->employer->name,
+                    'logo_url'     => $job->employer->employerProfile?->logo_full_url,
+                    'bio'          => $job->employer->employerProfile?->bio,
+                    'website'      => $job->employer->employerProfile?->website,
+                ],
+                'views_count' => $job->views_count,
+                'created_at'  => $job->created_at?->toDateString(),
             ],
         ]);
     }

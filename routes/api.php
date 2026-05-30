@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminStatsController;
 use App\Http\Controllers\Api\V1\Employer\EmployerApplicationController;
+use App\Http\Controllers\Api\V1\Employer\EmployerJobController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\EmployerAnalyticsController;
 use App\Http\Controllers\Api\V1\ApplicationController;
@@ -16,6 +17,8 @@ use App\Http\Controllers\Notification\NotificationController;
 use App\Http\Controllers\Payment\PaymentController;
 use App\Http\Controllers\Payment\PayPalController;
 use App\Http\Controllers\Payment\StripeWebhookController;
+use App\Models\Category;
+use App\Models\Technology;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
@@ -129,8 +132,14 @@ Route::middleware('auth')->group(function () {
     Route::patch('notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 });
 
+Route::prefix('v1')->group(function () {
+    Route::get('categories', fn () => response()->json(['data' => Category::orderBy('name')->get(['id', 'name', 'slug'])]));
+    Route::get('technologies', fn () => response()->json(['data' => Technology::orderBy('name')->get(['id', 'name', 'slug'])]));
+});
+
 Route::middleware(['auth', 'role:candidate'])->prefix('v1')->group(function () {
     Route::get('jobs', [JobController::class, 'index']);
+    Route::get('jobs/{job}', [JobController::class, 'show']);
     Route::post('jobs/{job}/apply', [JobController::class, 'apply']);
     Route::get('applications', [ApplicationController::class, 'index']);
     Route::get('applications/{application}', [ApplicationController::class, 'show']);
@@ -139,6 +148,10 @@ Route::middleware(['auth', 'role:candidate'])->prefix('v1')->group(function () {
 
 Route::middleware(['auth', 'role:employer'])->prefix('v1/employer')->group(function () {
     Route::get('jobs', [EmployerApplicationController::class, 'jobs']);
+    Route::post('jobs', [EmployerJobController::class, 'store']);
+    Route::get('jobs/{job}', [EmployerJobController::class, 'show']);
+    Route::put('jobs/{job}', [EmployerJobController::class, 'update']);
+    Route::delete('jobs/{job}', [EmployerJobController::class, 'destroy']);
     Route::get('jobs/{job}/applications', [EmployerApplicationController::class, 'index']);
     Route::get('applications/{application}', [EmployerApplicationController::class, 'show']);
     Route::patch('applications/{application}/status', [EmployerApplicationController::class, 'updateStatus']);
