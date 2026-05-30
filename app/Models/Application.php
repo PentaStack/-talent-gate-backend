@@ -42,4 +42,9 @@ class Application extends Model
     {
         return $this->belongsTo(User::class, 'candidate_id');
     }
+
+    public function payment(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Payment::class);
+    }
 }

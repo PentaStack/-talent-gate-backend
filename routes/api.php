@@ -2,12 +2,14 @@
 
 use App\Http\Controllers\Admin\AdminJobController;
 use App\Http\Controllers\Admin\AdminStatsController;
+use App\Http\Controllers\Admin\AdminCommentController;
 use App\Http\Controllers\Api\V1\Employer\EmployerApplicationController;
 use App\Http\Controllers\Api\V1\Employer\EmployerJobController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\EmployerAnalyticsController;
 use App\Http\Controllers\Api\V1\ApplicationController;
 use App\Http\Controllers\Api\V1\JobController;
+use App\Http\Controllers\Api\V1\JobCommentController;
 use App\Http\Controllers\Api\V1\Profile\AvatarUploadController;
 use App\Http\Controllers\Api\V1\Profile\ProfileController;
 use App\Http\Controllers\Api\V1\Profile\ResumeUploadController;
@@ -18,6 +20,7 @@ use App\Http\Controllers\Notification\NotificationController;
 use App\Http\Controllers\Payment\PaymentController;
 use App\Http\Controllers\Payment\PayPalController;
 use App\Http\Controllers\Payment\StripeWebhookController;
+use App\Http\Controllers\Payment\StripeCheckoutController;
 use App\Models\Category;
 use App\Models\Technology;
 use App\Models\User;
@@ -117,6 +120,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('jobs', [AdminJobController::class, 'index']);
     Route::patch('jobs/{job}/approve', [AdminJobController::class, 'approve']);
     Route::patch('jobs/{job}/reject', [AdminJobController::class, 'reject']);
+    Route::get('comments', [AdminCommentController::class, 'index']);
+    Route::patch('comments/{comment}/hide', [AdminCommentController::class, 'hide']);
+    Route::delete('comments/{comment}', [AdminCommentController::class, 'destroy']);
 });
 
 Route::middleware(['auth', 'role:employer'])->prefix('employer')->group(function () {
@@ -128,6 +134,7 @@ Route::post('payments/stripe/webhook', StripeWebhookController::class);
 Route::middleware(['auth', 'role:employer'])->group(function () {
     Route::get('payments', [PaymentController::class, 'index']);
     Route::post('payments/paypal', [PayPalController::class, 'store']);
+    Route::post('payments/stripe/intent', [StripeCheckoutController::class, 'store']);
 });
 
 Route::middleware('auth')->group(function () {
@@ -139,6 +146,12 @@ Route::middleware('auth')->group(function () {
 Route::prefix('v1')->group(function () {
     Route::get('categories', fn () => response()->json(['data' => Category::orderBy('name')->get(['id', 'name', 'slug'])]));
     Route::get('technologies', fn () => response()->json(['data' => Technology::orderBy('name')->get(['id', 'name', 'slug'])]));
+});
+
+Route::middleware('auth')->prefix('v1')->group(function () {
+    Route::get('jobs/{job}/comments', [JobCommentController::class, 'index']);
+    Route::post('jobs/{job}/comments', [JobCommentController::class, 'store']);
+    Route::delete('comments/{comment}', [JobCommentController::class, 'destroy']);
 });
 
 Route::middleware(['auth', 'role:candidate'])->prefix('v1')->group(function () {

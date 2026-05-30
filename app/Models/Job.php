@@ -52,5 +52,10 @@ class Job extends Model
     {
         return $this->hasMany(Application::class);
     }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(JobComment::class);
+    }
 }
 
