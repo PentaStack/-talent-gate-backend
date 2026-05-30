@@ -62,8 +62,12 @@ class EmployerApplicationController extends Controller
 
         $application->update(['status' => $to]);
 
+        if ($to === ApplicationStatus::Accepted) {
+            app(\App\Services\PaymentService::class)->createForAcceptedApplication($application);
+        }
+
         return response()->json([
-            'data'    => new EmployerApplicationResource($application->load('candidate.candidateProfile')),
+            'data'    => new EmployerApplicationResource($application->load(['candidate.candidateProfile', 'payment'])),
             'message' => "Application marked as {$to->value}.",
         ]);
     }
@@ -119,7 +123,7 @@ class EmployerApplicationController extends Controller
             $application->save();
         }
 
-        $application->load('candidate.candidateProfile');
+        $application->load(['candidate.candidateProfile', 'payment']);
 
         return response()->json(['data' => new EmployerApplicationResource($application)]);
     }

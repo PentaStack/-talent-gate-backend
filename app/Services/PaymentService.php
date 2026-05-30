@@ -57,4 +57,30 @@ class PaymentService
 
         return $payment;
     }
+
+    public function createStripeIntent(Payment $payment): array
+    {
+        $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
+
+        $intent = $stripe->paymentIntents->create([
+            'amount' => (int) ($payment->amount * 100),
+            'currency' => strtolower($payment->currency),
+            'metadata' => [
+                'payment_id' => $payment->id,
+                'application_id' => $payment->application_id,
+            ],
+            'automatic_payment_methods' => [
+                'enabled' => true,
+            ],
+        ]);
+
+        $payment->update([
+            'provider_reference' => $intent->id,
+        ]);
+
+        return [
+            'client_secret' => $intent->client_secret,
+            'payment_id' => $payment->id,
+        ];
+    }
 }

@@ -27,6 +27,15 @@ class EmployerApplicationResource extends JsonResource
                 'resume_url'       => $this->candidate->candidateProfile?->resume_full_url,
                 'has_resume'       => (bool) $this->candidate->candidateProfile?->resume_url,
             ]),
+            'payment'      => $this->relationLoaded('payment') && $this->payment ? [
+                'id'     => $this->payment->id,
+                'status' => $this->payment->status,
+                'amount' => $this->payment->amount,
+            ] : ($this->payment ? [
+                'id'     => $this->payment->id,
+                'status' => $this->payment->status,
+                'amount' => $this->payment->amount,
+            ] : null),
         ];
     }
 }
