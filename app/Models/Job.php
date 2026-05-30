@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ExperienceLevel;
 use App\Enums\JobStatus;
 use App\Enums\WorkType;
 use Database\Factories\JobFactory;
@@ -20,15 +21,16 @@ class Job extends Model
 
     protected $fillable = [
         'employer_id', 'title', 'description', 'requirements',
-        'salary_range', 'work_type', 'location', 'category_id',
+        'salary_range', 'work_type', 'location', 'experience_level', 'category_id',
         'status', 'rejection_reason', 'views_count', 'application_deadline',
     ];
 
     protected function casts(): array
     {
         return [
-            'status'               => JobStatus::class,
-            'work_type'            => WorkType::class,
+            'status'           => JobStatus::class,
+            'work_type'        => WorkType::class,
+            'experience_level' => ExperienceLevel::class,
             'application_deadline' => 'date',
         ];
     }
