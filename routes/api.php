@@ -21,6 +21,7 @@ use App\Http\Controllers\Payment\PaymentController;
 use App\Http\Controllers\Payment\PayPalController;
 use App\Http\Controllers\Payment\StripeWebhookController;
 use App\Http\Controllers\Payment\StripeCheckoutController;
+use App\Http\Controllers\Search\SearchController;
 use App\Models\Category;
 use App\Models\Technology;
 use App\Models\User;
@@ -174,4 +175,13 @@ Route::middleware(['auth', 'role:employer'])->prefix('v1/employer')->group(funct
     Route::patch('applications/{application}/status', [EmployerApplicationController::class, 'updateStatus']);
     Route::patch('applications/{application}/notes', [EmployerApplicationController::class, 'updateNotes']);
     Route::get('applications/{application}/resume', [EmployerApplicationController::class, 'streamResume']);
+});
+
+// ── Dev 3: Search ─────────────────────────────────────────────────────────────
+// Public: location reference list (for autocomplete, no auth required)
+Route::get('v1/search/locations', [SearchController::class, 'locations']);
+
+// Candidate-scoped: full search with filters
+Route::middleware(['auth', 'role:candidate'])->group(function () {
+    Route::get('v1/search/jobs', [SearchController::class, 'jobs']);
 });
